@@ -39,15 +39,15 @@ module.exports.getAllProducts = function (query, sort, callback) {
   Product.find(query, null, sort, callback)
 }
 
-module.exports.getProductByDepartment = function (query,sort, callback) {
+module.exports.getProductByDepartment = function (query, sort, callback) {
   Product.find(query, null, sort, callback)
 }
 
-module.exports.getProductByCategory = function (query,sort, callback) {
+module.exports.getProductByCategory = function (query, sort, callback) {
   Product.find(query, null, sort, callback)
 }
 
-module.exports.getProductByTitle = function (query,sort, callback) {
+module.exports.getProductByTitle = function (query, sort, callback) {
   Product.find(query, null, sort, callback)
 }
 
@@ -73,3 +73,12 @@ module.exports.getProductByID = function (id, callback) {
   Product.findById(id, callback);
 }
 
+module.exports.addProduct = function (data, callback) {
+  let newProduct = new Product(data)
+  newProduct.save(callback)
+}
+
+module.exports.editProduct = function (data, callback) {
+  var query = { '_id': data._id};
+  Product.findOneAndUpdate(query, data, { upsert: true }, callback);    
+}

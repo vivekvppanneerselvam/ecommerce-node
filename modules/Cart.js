@@ -6,6 +6,7 @@ class Cart {
     this.totalQty = oldCart.totalQty || 0;
     this.totalPrice = oldCart.totalPrice || 0;
     this.userId = oldCart.userId || "";
+    this.active = oldCart.active || true;
   }
 
   add(item, id) {
@@ -15,19 +16,20 @@ class Cart {
     }
     storedItem.qty++;
     storedItem.price = parseFloat((storedItem.item.price * storedItem.qty).toFixed(2));
-    this.items[id]=storedItem
+    this.items[id] = storedItem
     this.totalQty++;
     this.totalPrice += storedItem.item.price;
     this.totalPrice = parseFloat(this.totalPrice.toFixed(2))
     return this
   }
 
-  generateModel(){
+  generateModel() {
     let newCart = new cartModel({
       items: this.items,
       totalQty: this.totalQty,
       totalPrice: this.totalPrice,
-      userId: this.userId
+      userId: this.userId,
+      active: this.active
     })
     return newCart
   }

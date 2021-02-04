@@ -11,6 +11,7 @@ const Variant = require('../models/Variant')
 const TypedError = require('../modules/ErrorHandler')
 
 
+
 //POST /signin
 router.post('/signin', function (req, res, next) {
   const { fullname, email, password, verifyPassword } = req.body
@@ -79,6 +80,8 @@ router.post('/login', function (req, res, next) {
           user_token: {
             user_id: user.id,
             user_name: user.fullname,
+            email: user.email,
+            admin: (('admin' in  user) ? user.admin : false),
             token: token,
             expire_in: '7d'
           }
@@ -113,7 +116,9 @@ router.post('/:userId/cart', ensureAuthenticated, function (req, res, next) {
     if (err) return next(err)
     let oldCart = new CartClass(c[0] || { userId })
     // no cart save empty cart to database then return response
+    console.log("[INFO] - getCartByUserId", c.length)
     if (c.length < 1 && !productId) {
+      console.log("[INFO] - getCartByUserId", oldCart.generateModel())
       return Cart.createCart(oldCart.generateModel(), function (err, resultCart) {
         if (err) return next(err)
         return res.status(201).json({ cart: resultCart })
@@ -185,6 +190,7 @@ router.post('/:userId/cart', ensureAuthenticated, function (req, res, next) {
 
 //PUT cart
 router.put('/:userId/cart', ensureAuthenticated, function (req, res, next) {
+  console.log("[INFO] PUT ::: /:userId/cart")
   let userId = req.params.userId
   let requestProduct = req.body
   let { productId, color, size } = requestProduct.product
@@ -204,6 +210,7 @@ router.put('/:userId/cart', ensureAuthenticated, function (req, res, next) {
             items: newCart.items,
             totalQty: newCart.totalQty,
             totalPrice: newCart.totalPrice,
+            active: true,
             userId: userId
           },
           function (err, result) {
@@ -226,5 +233,33 @@ router.put('/:userId/cart', ensureAuthenticated, function (req, res, next) {
     })
   })
 })
+
+
+router.post('/forgotpasswordResponse', function (req, res, next) {
+  User.forgotpasswordResponse(req, function (err, c) {
+    console.log("HI:" + req.body.email);
+    if (err) return next(err)
+    res.json({ status: 'success', message: 'An e-mail has been sent to ' + req.body.email + ' with further instructions.' });
+  })
+})
+
+router.get('/reset/:token', function (req, res, next) {
+  User.resetpasswordResponse(req, function (err, c) {
+    if (err) return next(err);
+    if (!c) {
+      res.status(500).json({ message: 'Password reset token is invalid or has expired.' });
+    } else {
+      res.json({ message: 'token is valid' })
+    }
+  })
+})
+
+router.post('/reset/:token', function (req, res, next) {
+  User.setpasswordResponsemail(req, function (err, c) {
+    if (err) return next(err)
+    res.json({ status: 'success', message: 'Success! Your password has been changed.' });
+  })
+})
+
 
 module.exports = router;

@@ -27,3 +27,12 @@ module.exports.getAllDepartments = function (query, callback) {
 module.exports.getDepartmentById = function (id, callback) {
     Department.findById(id, callback);
 }
+module.exports.addDepartment = function (data, callback) {
+    let newDepartment = new Department(data)
+    newDepartment.save(callback)
+}
+
+module.exports.editDepartment = function (data, callback) {
+    var query = { '_id': data._id};
+    Department.findOneAndUpdate(query, data, { upsert: true }, callback);    
+}

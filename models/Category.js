@@ -3,12 +3,12 @@
 // You can think that this is a representation of the database and we are using that
 // for saving, reading, updating information from the database.
 
-var mongoose    = require('mongoose');
+var mongoose = require('mongoose');
 
-var categorySchema  = mongoose.Schema({
+var categorySchema = mongoose.Schema({
     categoryName: {
         type: String,
-        index   : true
+        index: true
     }
 });
 
@@ -18,10 +18,16 @@ var Category = module.exports = mongoose.model('Categories', categorySchema);
 // without calling this functions but I just want to show you how you can add some functions
 // to your model file to get specific data.
 
-module.exports.getAllCategories = function(callback){
+module.exports.getAllCategories = function (callback) {
     Category.find(callback)
 }
 
-module.exports.getCategoryById = function(id, callback){
+module.exports.getCategoryById = function (id, callback) {
     Category.findById(id, callback);
+}
+
+module.exports.addCategory = function (data, callback) {
+    console.log(data)
+    let category = new Category(data)
+    category.save(callback)
 }

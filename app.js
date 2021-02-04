@@ -7,16 +7,20 @@ var express = require('express');
 var mongoose = require('mongoose');
 var cors = require('cors')
 var expressValidator  = require('express-validator');//req.checkbody()
-const mongoConfig = require('./configs/mongo-config')
+var fileUpload = require('express-fileupload');
+const mongoConfig = require('./configs/mongo-config');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 
-mongoose.connect(mongoConfig, { useNewUrlParser: true, useCreateIndex: true, },function(error){
+mongoose.connect(mongoConfig.mongourl, { useNewUrlParser: true, useCreateIndex: true, },function(error){
   if(error) throw error
     console.log(`connect mongodb success`);
 });
 
 var app = express()
+app.use(fileUpload({
+  useTempFiles:true
+}))
 app.use(cors())
 
 // Express validator
@@ -50,7 +54,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 //routers
 app.use('/', indexRouter);
-app.use('/users', usersRouter);
+app.use('/', usersRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

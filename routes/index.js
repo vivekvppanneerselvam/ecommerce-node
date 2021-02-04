@@ -5,12 +5,18 @@ const Product = require('../models/Product')
 const Variant = require('../models/Variant')
 const Department = require('../models/Department')
 const Category = require('../models/Category')
+const Address = require('../models/Address')
+const Order = require('../models/Order')
 const TypedError = require('../modules/ErrorHandler')
 const Cart = require('../models/Cart');
 const CartClass = require('../modules/Cart')
 const paypal_config = require('../configs/paypal-config')
 const paypal = require('paypal-rest-sdk')
-
+const Mail = require('../models/Mail')
+const Image = require('../models/Image')
+const User = require('../models/User')
+const MailTemplates =require('../configs/mailTemplates')
+var env = require('../configs/envConfig')
 
 //GET /products
 router.get('/products', function (req, res, next) {
@@ -38,6 +44,7 @@ router.get('/products/:id', function (req, res, next) {
     }
   });
 });
+
 
 //GET /variants
 router.get('/variants', function (req, res, next) {
@@ -78,6 +85,22 @@ router.get('/departments', function (req, res, next) {
   })
 })
 
+//POST /departments
+router.post('/departments', function (req, res, next) {
+  Department.addDepartment(req.body, function (err, d) {
+    if (err) return next(err)
+    res.status(200).json({ departments: d })
+  })
+})
+
+//POST /edit_department 
+router.post('/edit_department', function (req, res, next) {
+  Department.editDepartment(req.body, function (err, d) {
+    if (err) return next(err)
+    res.status(200).json({ departments: d })
+  })
+})
+
 //GET /categories
 router.get('/categories', function (req, res, next) {
   Category.getAllCategories(function (err, c) {
@@ -85,6 +108,181 @@ router.get('/categories', function (req, res, next) {
     res.json({ categories: c })
   })
 })
+
+//POST /categories
+router.post('/categories', function (req, res, next) {
+  Category.addCategory(req.body, function (err, d) {
+    if (err) return next(err)
+    res.status(200).json({ categories: d })
+  })
+})
+
+//POST /product
+router.post('/product', function (req, res, next) {
+  const file = req.files.image;
+  console.log(file);
+  Image.imageUpload(file.tempFilePath, function (err, result) {
+    console.log(err)
+    if (err) return next(err)
+    req.body['imagePath'] = result.url
+    Product.addProduct(req.body, function (err, d) {
+      if (err) return next(err)
+      res.status(200).json({ product: d })
+    })
+  })
+})
+
+//POST /edit_product
+router.post('/edit_product', function (req, res, next) {
+  Product.editProduct(req.body, function (err, d) {
+    if (err) return next(err)
+    res.status(200).json({ product: d })
+  })
+})
+
+//GET /Addresses by user id
+router.get('/addresses', function (req, res, next) {
+  Address.getAddressesByUserId(req.query.userId, function (err, c) {
+    if (err) return next(err)
+    res.json({ addresses: c })
+  })
+})
+
+// GET /address by id
+router.get('/address', function (req, res, next) {
+  Address.getAddressesById(req.query.id, function (err, c) {
+    if (err) return next(err)
+    res.json({ address: c })
+  })
+})
+
+//POST /Address
+router.post('/addresses', function (req, res, next) {
+  Address.addAddress(req.body, function (err, c) {
+    if (err) return next(err)
+    res.json({ addresses: c })
+  })
+})
+
+
+//POST /Address
+router.post('/update_address', function (req, res, next) {
+  Address.updateAddress(req.body, function (err, c) {
+    if (err) return next(err)
+    res.json({ addresses: c })
+  })
+})
+
+
+//GET /Order
+router.get('/order', function (req, res, next) {
+  Order.getOrderById(req.query.id, function (err, c) {
+    if (err) return next(err)
+    res.json({ order: c })
+  })
+})
+
+//GET /cart
+router.get('/cart', function (req, res, next) {
+  Cart.getCartById(req.query.id, function (err, c) {
+    if (err) return next(err)
+    res.json({ cart: c })
+  })
+})
+
+//POST /order
+router.post('/order', function (req, res, next) {
+  Order.addOrder(req.body, function (err, order) {
+    if (err) return next(err)
+    console.log('[INFO] -addOrder', order)
+    Cart.updateOrderCart(order.cartId, function (err, cart) {
+      if (err) return next(err)
+      res.send({ order: order })
+    })
+  })
+})
+
+
+//POST /update order
+router.post('/update_order', function (req, res, next) {
+  Order.updateOrder(req.body, function (err, c) {
+    if (err) return next(err)
+    res.json({ order: c })
+  })
+})
+
+// GET active orders
+router.get('/active_order', function (req, res, next) {
+  Order.fetchActiveOrders(req.query.id, function (err, c) {
+    if (err) return next(err)
+    res.json({ order: c })
+  })
+})
+
+router.get('/all_active_orders', function (req, res, next) {
+  Order.fetchAllActiveOrders(function (err, c) {
+    if (err) return next(err)
+    res.json({ order: c })
+  })
+})
+
+
+
+//GET order history
+router.get('/order_history', function (req, res, next) {
+  Order.fetchOrderHistory(req.query.id, function (err, c) {
+    if (err) return next(err)
+    res.json({ order: c })
+  })
+})
+//GET user count
+router.get('/user_count', function (req, res, next) {
+  User.getUsersCount(function (err, c) {
+    if (err) return next(err)
+    res.send({count:c})
+  })
+})
+
+// GET order count
+router.get('/order_count', function (req, res, next) {
+  Order.getOrdersCount(function (err, c) {
+    if (err) return next(err)
+    res.send({count:c})
+  })
+})
+
+
+
+// trigger mail
+router.get('/send_mail', function (req, res, next) {
+  const mailOptions = {
+    from: "info.darkthoughts@gmail.com",
+    to: "vvkslv3@gmail.com",
+    subject: "Node.js Email with Secure OAuth",
+    generateTextFromHTML: true,
+    html: MailTemplates.orderTemplate({order:'haha'})
+  };
+  Mail.sendMail(mailOptions, function (err, c) {
+    if (err) return next(err)
+    res.json({ mail: c })
+  })
+})
+
+
+// upload image
+router.post('/upload_image', function (req, res, next) {
+  const file = req.files.photo;
+  console.log(file);
+  Image.imageUpload(file.tempFilePath, function (err, result) {
+    console.log(err)
+    if (err) return next(err)
+    res.send({ success: true, result })
+  })
+})
+
+
+
+
 
 //GET /search?
 router.get('/search', function (req, res, next) {
@@ -164,8 +362,8 @@ router.get('/filter', function (req, res, next) {
 //GET /checkout
 router.get('/checkout/:cartId', ensureAuthenticated, function (req, res, next) {
   const cartId = req.params.cartId
-  const frontURL = 'https://zack-ecommerce-reactjs.herokuapp.com'
-  // const frontURL = 'http://localhost:3000'
+  //const frontURL = 'https://zack-ecommerce-reactjs.herokuapp.com'
+  const frontURL = env.frontURL
 
   Cart.getCartById(cartId, function (err, c) {
     if (err) return next(err)
@@ -288,5 +486,7 @@ function categorizeQueryString(queryObj) {
   }
   return { query, order }
 }
+
+
 
 module.exports = router;
